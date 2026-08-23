@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - Setup Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="background:#121212; color:#fff; font-family:sans-serif; text-align:center; padding-top:60px;">
+  <h1>Retropia — Setup Test</h1>
+  <p id="status">Checking connection...</p>
+
+  <script src="js/supabase-client.js"></script>
+  <script>
+    // Quick test: confirm the Supabase client loaded correctly
+    document.getElementById('status').innerText = supabaseClient ? "✅ Connected to Supabase!" : "❌ Not connected";
+  </script>
+</body>
+</html>
