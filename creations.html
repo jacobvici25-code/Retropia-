@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - Creations</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+      min-height: 100vh;
+    }
+    body { padding: 20px 20px 100px; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left img { width: 30px; height: 30px; border-radius: 8px; }
+    .header h1 { font-size: 20px; font-weight: 700; margin: 0; }
+    .profile-link {
+      width: 38px; height: 38px;
+      background: #1C1C1C;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .creation-card {
+      background: #1C1C1C;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .creation-thumb {
+      height: 140px;
+      background-size: cover;
+      background-position: top center;
+      background-color: #161616;
+    }
+    .creation-info { padding: 10px 12px 12px; }
+    .creation-name { font-size: 14px; font-weight: 600; }
+    .creation-date { font-size: 12px; color: #777; margin-top: 2px; }
+    .creation-badge {
+      position: absolute;
+      top: 8px; left: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+    }
+    .badge-watermarked { color: #F2B84B; }
+    .badge-purchased { color: #35C98A; }
+
+    .empty-state {
+      background: #1C1C1C;
+      border-radius: 16px;
+      padding: 40px 20px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .empty-state .emoji { font-size: 34px; margin-bottom: 12px; }
+    .empty-state .title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .empty-state .sub { font-size: 14px; color: #777; margin-bottom: 18px; }
+    .empty-btn {
+      display: inline-block;
+      background: #6C5CE7;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #161616;
+      border-top: 1px solid #232323;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 74px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-decoration: none;
+      color: #666;
+      font-size: 11px;
+      flex: 1;
+    }
+    .nav-item.active { color: #6C5CE7; }
+    .nav-icon { font-size: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <img src="logo.png" alt="Retropia">
+      <h1>Creations</h1>
+    </div>
+    <a href="profile.html" class="profile-link">👤</a>
+  </div>
+
+  <div id="creations-container">Loading...</div>
+
+  <div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item">
+      <div class="nav-icon">🏠</div>
+      Home
+    </a>
+    <a href="creations.html" class="nav-item active">
+      <div class="nav-icon">🎞️</div>
+      Creations
+    </a>
+    <a href="upload.html" class="nav-item">
+      <div class="nav-icon">➕</div>
+      Create
+    </a>
+    <a href="profile.html" class="nav-item">
+      <div class="nav-icon">👤</div>
+      Profile
+    </a>
+  </div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    (async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      const { data: generations, error } = await supabaseClient
+        .from('generations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('creations-container');
+
+      if (!generations || generations.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="emoji">🎞️</div>
+            <div class="title">No journeys yet</div>
+            <div class="sub">Create your first cinematic journey.</div>
+            <a href="upload.html" class="empty-btn">Create Journey</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `<div class="grid">${generations.map(g => `
+        <a href="result.html?id=${g.id}" style="text-decoration:none;color:inherit;">
+          <div class="creation-card">
+            <div class="creation-badge ${g.paid ? 'badge-purchased' : 'badge-watermarked'}">${g.paid ? 'HD' : 'Preview'}</div>
+            <div class="creation-thumb" style="background-image:url('${(g.image_urls && g.image_urls[0]) || ''}')"></div>
+            <div class="creation-info">
+              <div class="creation-name">${g.theme || 'Journey'}</div>
+              <div class="creation-date">${new Date(g.created_at).toLocaleDateString()}</div>
+            </div>
+          </div>
+        </a>
+      `).join('')}</div>`;
+    })();
+  </script>
+</body>
+</html>
