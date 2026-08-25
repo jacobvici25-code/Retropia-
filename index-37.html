@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - See Yourself Across Every Era</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+    }
+    body { padding: 20px 20px 60px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .topbar img { width: 34px; height: 34px; border-radius: 9px; }
+    .topbar .name { font-size: 17px; font-weight: 700; }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(108,92,231,0.15);
+      border: 1px solid rgba(108,92,231,0.4);
+      color: #B8A9F5;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 0 0 12px;
+      letter-spacing: -0.5px;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, #8B7CF0, #6C5CE7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    p.sub {
+      color: #B8B8B8;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 24px;
+      max-width: 320px;
+    }
+
+    /* Scattered photo showcase */
+    .showcase {
+      position: relative;
+      height: 300px;
+      margin: 0 0 28px;
+    }
+    .showcase .card {
+      position: absolute;
+      width: 130px;
+      height: 170px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      background-size: cover;
+      background-position: center;
+    }
+    .showcase .card .label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 8px 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .card-1 { top: 0; left: 10px; transform: rotate(-8deg); background-image: url('romantic.png'); z-index: 1; }
+    .card-2 { top: 10px; right: 0; transform: rotate(6deg); background-image: url('royal.png'); z-index: 1; }
+    .card-3 {
+      top: 55px; left: 50%; transform: translateX(-50%);
+      width: 150px; height: 200px;
+      background-image: url('heros-journey.png');
+      z-index: 2;
+      border: 2px solid rgba(108,92,231,0.5);
+    }
+    .card-3 .play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px; height: 44px;
+      background: rgba(0,0,0,0.55);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .card-3 .label { font-size: 13px; }
+
+    .cta-btn {
+      width: 100%;
+      height: 54px;
+      background: #6C5CE7;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(108,92,231,0.4);
+    }
+    .cta-btn:active { filter: brightness(0.93); }
+
+    .trust-line {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 12px;
+    }
+
+    /* Section heading */
+    .section-heading {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 40px 0 14px;
+    }
+
+    /* Horizontal era scroll */
+    .era-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin: 0 -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      scroll-snap-type: x mandatory;
+    }
+    .era-scroll::-webkit-scrollbar { display: none; }
+    .era-card {
+      flex: 0 0 auto;
+      width: 110px;
+      height: 150px;
+      border-radius: 14px;
+      background-size: cover;
+      background-position: center;
+      background-color: #1C1C1C;
+      position: relative;
+      scroll-snap-align: start;
+      overflow: hidden;
+    }
+    .era-card span {
+      position: absolute;
+      bottom: 8px; left: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+
+    /* How it works */
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+    .step { display: flex; align-items: flex-start; gap: 14px; }
+    .step-num {
+      width: 32px; height: 32px;
+      background: rgba(108,92,231,0.15);
+      border: 1px solid rgba(108,92,231,0.4);
+      color: #B8A9F5;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-title { font-size: 15px; font-weight: 600; }
+    .step-sub { font-size: 13px; color: #777; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <img src="logo.png" alt="Retropia">
+    <span class="name">Retropia</span>
+  </div>
+
+  <div class="hero-tag">✨ AI ERA JOURNEY</div>
+  <h1>See yourself<br><span class="grad">across every era.</span></h1>
+  <p class="sub">Upload a few selfies. Pick your journey. Watch AI take you through history and the future — in seconds.</p>
+
+  <div class="showcase">
+    <div class="card card-1"><div class="label">The Romantic</div></div>
+    <div class="card card-2"><div class="label">The Royal</div></div>
+    <div class="card card-3">
+      <div class="play">▶</div>
+      <div class="label">See yourself as a hero</div>
+    </div>
+  </div>
+
+  <button class="cta-btn" onclick="handleStart()">Create My Era Journey — Free</button>
+  <div class="trust-line">AI-powered • Share-ready • No watermark after purchase</div>
+
+  <div class="section-heading">See yourself in every era</div>
+  <div class="era-scroll">
+    <div class="era-card" style="background-image:url('time-traveler.png')"><span>1920s</span></div>
+    <div class="era-card" style="background-image:url('romantic.png')"><span>1940s</span></div>
+    <div class="era-card" style="background-image:url('celebrity.png')"><span>1970s</span></div>
+    <div class="era-card" style="background-image:url('rebel.png')"><span>1990s</span></div>
+    <div class="era-card" style="background-image:url('genius.png')"><span>2020s</span></div>
+    <div class="era-card" style="background-image:url('spirit.png')"><span>2090s</span></div>
+  </div>
+
+  <div class="section-heading">How Retropia works</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <div class="step-title">Upload selfies</div>
+        <div class="step-sub">Add 5–15 clear photos of yourself</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <div class="step-title">Pick a journey</div>
+        <div class="step-sub">Choose the story you want to see</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <div class="step-title">Get your video</div>
+        <div class="step-sub">AI generates your cinematic journey</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    async function handleStart() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = 'auth.html';
+        return;
+      }
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

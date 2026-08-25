@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+      min-height: 100vh;
+    }
+    body { padding: 20px 20px 100px; }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .user-row { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .greeting { font-size: 13px; color: #777; }
+    .username { font-size: 16px; font-weight: 700; }
+    .header-icons { display: flex; align-items: center; gap: 10px; }
+    .icon-btn {
+      width: 38px; height: 38px;
+      background: #1C1C1C;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      cursor: pointer;
+      position: relative;
+      color: #fff;
+      text-decoration: none;
+    }
+    .badge-dot {
+      position: absolute;
+      top: -3px; right: -3px;
+      width: 9px; height: 9px;
+      background: #EF5B5B;
+      border-radius: 50%;
+      border: 2px solid #121212;
+    }
+
+    /* Notification dropdown */
+    .notif-panel {
+      display: none;
+      position: absolute;
+      top: 64px; right: 20px;
+      width: 260px;
+      background: #1C1C1C;
+      border: 1px solid #2A2A2A;
+      border-radius: 14px;
+      padding: 14px;
+      z-index: 10;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    }
+    .notif-panel.open { display: block; }
+    .notif-item { font-size: 13px; color: #B8B8B8; padding: 8px 0; border-bottom: 1px solid #2A2A2A; }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item strong { color: #fff; display: block; margin-bottom: 2px; }
+
+    /* Limit + plan row */
+    .status-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .limit-card {
+      background: #1C1C1C;
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .ring-wrap { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { stroke: #2A2A2A; }
+    .ring-fill { stroke: #6C5CE7; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+    .ring-label {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+    }
+    .limit-text { font-size: 12px; color: #B8B8B8; line-height: 1.4; }
+    .limit-text strong { color: #fff; display: block; font-size: 13px; }
+
+    .plan-card {
+      background: linear-gradient(135deg, rgba(108,92,231,0.18), rgba(139,124,240,0.06));
+      border: 1px solid rgba(108,92,231,0.3);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .plan-tag { font-size: 11px; color: #B8A9F5; font-weight: 700; letter-spacing: 0.5px; }
+    .plan-name { font-size: 16px; font-weight: 700; margin-top: 2px; }
+
+    /* Create CTA */
+    .create-card {
+      background: linear-gradient(135deg, #6C5CE7, #5145B5);
+      border-radius: 20px;
+      padding: 22px 20px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      display: block;
+    }
+    .create-card .glow {
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%);
+    }
+    .create-title { font-size: 19px; font-weight: 800; margin-bottom: 4px; position: relative; }
+    .create-sub { font-size: 13px; opacity: 0.85; position: relative; margin-bottom: 16px; }
+    .create-arrow {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      position: relative;
+    }
+
+    /* Section heading */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-heading h2 { font-size: 17px; font-weight: 700; margin: 0; }
+    .section-heading a { font-size: 13px; color: #8B7CF0; text-decoration: none; }
+
+    /* Creations grid */
+    .creations-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .creation-card {
+      background: #1C1C1C;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .creation-thumb {
+      height: 120px;
+      background-size: cover;
+      background-position: top center;
+    }
+    .creation-info { padding: 8px 10px 10px; }
+    .creation-name { font-size: 13px; font-weight: 600; }
+    .creation-date { font-size: 11px; color: #777; margin-top: 1px; }
+    .creation-badge {
+      position: absolute;
+      top: 8px; left: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+    }
+    .badge-watermarked { color: #F2B84B; }
+    .badge-purchased { color: #35C98A; }
+
+    /* Empty state */
+    .empty-state {
+      background: #1C1C1C;
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    .empty-state .emoji { font-size: 30px; margin-bottom: 10px; }
+    .empty-state .title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .empty-state .sub { font-size: 13px; color: #777; margin-bottom: 16px; }
+    .empty-btn {
+      display: inline-block;
+      background: #6C5CE7;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* Bottom nav */
+    .bottom-nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #161616;
+      border-top: 1px solid #232323;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 74px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-decoration: none;
+      color: #666;
+      font-size: 11px;
+      flex: 1;
+    }
+    .nav-item.active { color: #6C5CE7; }
+    .nav-icon { font-size: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="user-row">
+      <img src="logo.png" alt="Retropia" class="avatar">
+      <div>
+        <div class="greeting">Welcome back</div>
+        <div class="username" id="username">...</div>
+      </div>
+    </div>
+    <div class="header-icons">
+      <div class="icon-btn" onclick="toggleNotifs()">
+        🔔
+        <div class="badge-dot"></div>
+      </div>
+      <a href="profile.html" class="icon-btn">⚙️</a>
+    </div>
+  </div>
+
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-item"><strong>Welcome to Retropia!</strong>Upload your first selfies to start your journey.</div>
+    <div class="notif-item"><strong>Tip</strong>10-15 clear photos give the best results.</div>
+  </div>
+
+  <div class="status-row">
+    <div class="limit-card">
+      <div class="ring-wrap">
+        <svg width="56" height="56">
+          <circle class="ring-bg" cx="28" cy="28" r="24" stroke-width="5" fill="none"></circle>
+          <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="24" stroke-width="5" fill="none"
+            stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+        </svg>
+        <div class="ring-label" id="ring-label">0/1</div>
+      </div>
+      <div class="limit-text">
+        <strong>Daily journeys</strong>
+        Free plan • 1 per day
+      </div>
+    </div>
+    <div class="plan-card">
+      <div class="plan-tag">CURRENT PLAN</div>
+      <div class="plan-name">Free</div>
+    </div>
+  </div>
+
+  <a href="upload.html" class="create-card">
+    <div class="glow"></div>
+    <div class="create-title">Create New Era Journey</div>
+    <div class="create-sub">See yourself across another era</div>
+    <div class="create-arrow">→</div>
+  </a>
+
+  <div class="section-heading">
+    <h2>Recent journeys</h2>
+    <a href="creations.html">See all</a>
+  </div>
+  <div id="creations-container">
+    <div class="empty-state">
+      <div class="emoji">🎬</div>
+      <div class="title">Your first journey is waiting</div>
+      <div class="sub">Upload selfies and pick a theme to begin</div>
+      <a href="upload.html" class="empty-btn">Create My Journey</a>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      Home
+    </a>
+    <a href="creations.html" class="nav-item">
+      <div class="nav-icon">🎞️</div>
+      Creations
+    </a>
+    <a href="upload.html" class="nav-item">
+      <div class="nav-icon">➕</div>
+      Create
+    </a>
+    <a href="profile.html" class="nav-item">
+      <div class="nav-icon">👤</div>
+      Profile
+    </a>
+  </div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    function toggleNotifs() {
+      document.getElementById('notif-panel').classList.toggle('open');
+    }
+
+    (async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      const name = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'there';
+      document.getElementById('username').innerText = name;
+
+      // Daily generation count
+      const today = new Date().toISOString().split('T')[0];
+      const { data: dailyRow } = await supabaseClient
+        .from('daily_generations')
+        .select('count')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      const used = dailyRow?.count || 0;
+      const limit = 1;
+      const circumference = 150.8;
+      const offset = circumference - (Math.min(used / limit, 1) * circumference);
+      document.getElementById('ring-fill').style.strokeDashoffset = offset;
+      document.getElementById('ring-label').innerText = `${used}/${limit}`;
+
+      // Recent creations
+      const { data: generations } = await supabaseClient
+        .from('generations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (generations && generations.length > 0) {
+        const container = document.getElementById('creations-container');
+        container.innerHTML = `<div class="creations-grid">${generations.map(g => `
+          <div class="creation-card">
+            <div class="creation-badge ${g.paid ? 'badge-purchased' : 'badge-watermarked'}">${g.paid ? 'HD' : 'Preview'}</div>
+            <div class="creation-thumb" style="background-image:url('${(g.image_urls && g.image_urls[0]) || ''}')"></div>
+            <div class="creation-info">
+              <div class="creation-name">${g.theme || 'Journey'}</div>
+              <div class="creation-date">${new Date(g.created_at).toLocaleDateString()}</div>
+            </div>
+          </div>
+        `).join('')}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>
