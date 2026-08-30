@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - Your Journey</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+      min-height: 100vh;
+    }
+    body { padding: 20px 20px 40px; }
+
+    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .back-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: #1C1C1C;
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; margin: 0; flex: 1; }
+    .share-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: #1C1C1C;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .media-wrap {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #1C1C1C;
+      margin-bottom: 16px;
+    }
+    .media-wrap img { width: 100%; display: block; }
+    .watermark {
+      position: absolute;
+      bottom: 10px; right: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.4);
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .result-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .result-desc { font-size: 14px; color: #B8B8B8; margin-bottom: 24px; }
+
+    .unlock-heading { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .offer-card {
+      background: linear-gradient(135deg, #6C5CE7, #5145B5);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .offer-glow {
+      position: absolute; top: -30px; right: -30px;
+      width: 110px; height: 110px;
+      background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%);
+    }
+    .offer-name { font-size: 16px; font-weight: 700; position: relative; }
+    .offer-desc { font-size: 12px; opacity: 0.85; margin: 4px 0 10px; position: relative; }
+    .offer-price { font-size: 20px; font-weight: 800; position: relative; }
+    .offer-price span { font-size: 12px; font-weight: 500; opacity: 0.8; }
+
+    .secondary-offer {
+      background: #1C1C1C;
+      border: 1px solid #2A2A2A;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .secondary-offer .name { font-size: 14px; font-weight: 600; }
+    .secondary-offer .desc { font-size: 12px; color: #777; margin-top: 2px; }
+    .secondary-offer .price { font-size: 15px; font-weight: 700; color: #8B7CF0; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1C1C1C;
+      border: 1px solid #2A2A2A;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.25s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="dashboard.html" class="back-btn">&larr;</a>
+    <h1>Your journey is ready</h1>
+    <div class="share-icon" onclick="shareResult()">↗</div>
+  </div>
+
+  <div class="media-wrap">
+    <img id="result-img" src="" alt="Your era journey">
+    <div class="watermark">Made with Retropia.app</div>
+  </div>
+
+  <div class="result-title" id="result-title">Your Journey</div>
+  <div class="result-desc" id="result-desc">Your cinematic journey across eras.</div>
+
+  <div class="unlock-heading">Take your journey further</div>
+
+  <div class="offer-card" onclick="showToast()">
+    <div class="offer-glow"></div>
+    <div class="offer-name">HD Journey</div>
+    <div class="offer-desc">Full HD video • No watermark</div>
+    <div class="offer-price">$9.99</div>
+  </div>
+
+  <div class="secondary-offer" onclick="showToast()">
+    <div>
+      <div class="name">DreamClip</div>
+      <div class="desc">Custom cinematic clip</div>
+    </div>
+    <div class="price">$9.99</div>
+  </div>
+
+  <div class="secondary-offer" onclick="showToast()">
+    <div>
+      <div class="name">Bundle</div>
+      <div class="desc">HD Journey + DreamClip</div>
+    </div>
+    <div class="price">$14.99</div>
+  </div>
+
+  <div class="secondary-offer" onclick="showToast()">
+    <div>
+      <div class="name">Retropia Pro</div>
+      <div class="desc">Unlimited journeys, priority</div>
+    </div>
+    <div class="price">$7.99<span style="font-size:11px;color:#777;">/mo</span></div>
+  </div>
+
+  <div class="toast" id="toast">Payment coming soon! Enjoy the free preview for now.</div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    const themeLabels = {
+      'time-traveler': 'The Time Traveler',
+      'heros-journey': "The Hero's Journey",
+      'romantic': 'The Romantic',
+      'rebel': 'The Rebel',
+      'royal': 'The Royal',
+      'genius': 'The Genius',
+      'explorer': 'The Explorer',
+      'artist': 'The Artist',
+      'celebrity': 'The Celebrity Evolution',
+      'spirit': 'The Spirit'
+    };
+
+    (async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      const imageUrl = sessionStorage.getItem('retropia_result_image');
+      const theme = sessionStorage.getItem('retropia_result_theme');
+
+      if (!imageUrl) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      document.getElementById('result-img').src = imageUrl;
+      const label = themeLabels[theme] || 'Your Journey';
+      document.getElementById('result-title').innerText = label;
+      document.getElementById('result-desc').innerText = `Your cinematic journey — ${label}.`;
+
+      // Save this generation to the database
+      const today = new Date().toISOString().split('T')[0];
+      await supabaseClient.from('generations').insert({
+        user_id: user.id,
+        theme: label,
+        image_urls: [imageUrl],
+        paid: false
+      });
+
+      // Increment daily generation count
+      const { data: existing } = await supabaseClient
+        .from('daily_generations')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (existing) {
+        await supabaseClient
+          .from('daily_generations')
+          .update({ count: existing.count + 1 })
+          .eq('id', existing.id);
+      } else {
+        await supabaseClient
+          .from('daily_generations')
+          .insert({ user_id: user.id, date: today, count: 1 });
+      }
+    })();
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function shareResult() {
+      const imageUrl = sessionStorage.getItem('retropia_result_image');
+      if (navigator.share) {
+        navigator.share({ title: 'My Retropia Journey', text: 'Check out my AI era journey!', url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast();
+      }
+    }
+  </script>
+</body>
+</html>

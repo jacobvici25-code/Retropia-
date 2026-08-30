@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retropia - Creating Your Journey</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+    .glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 340px; height: 340px;
+      background: radial-gradient(circle, rgba(108,92,231,0.28) 0%, rgba(108,92,231,0) 70%);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } }
+
+    .loader {
+      width: 64px; height: 64px;
+      border: 4px solid #2A2A2A;
+      border-top-color: #6C5CE7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; position: relative; z-index: 1; }
+    .status-msg { font-size: 15px; color: #B8B8B8; min-height: 20px; position: relative; z-index: 1; transition: opacity 0.3s ease; }
+
+    .progress-track {
+      width: 220px;
+      height: 6px;
+      background: #292929;
+      border-radius: 10px;
+      margin-top: 24px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 30%;
+      background: #6C5CE7;
+      border-radius: 10px;
+      animation: indeterminate 1.6s ease-in-out infinite;
+    }
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); width: 40%; }
+      50% { width: 60%; }
+      100% { transform: translateX(250%); width: 40%; }
+    }
+
+    .sub-note { font-size: 13px; color: #666; margin-top: 20px; position: relative; z-index: 1; }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="loader"></div>
+  <h1>Creating your journey</h1>
+  <div class="status-msg" id="status-msg">Preparing your photos...</div>
+  <div class="progress-track"><div class="progress-fill"></div></div>
+  <div class="sub-note">Usually takes 30–60 seconds.</div>
+
+  <script src="supabase-client.js"></script>
+  <script>
+    const messages = [
+      "Preparing your photos...",
+      "Traveling through the eras...",
+      "Mixing cinematic energy...",
+      "Creating your transitions...",
+      "Finishing your journey..."
+    ];
+    let msgIndex = 0;
+    const statusEl = document.getElementById('status-msg');
+    const rotateInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % messages.length;
+      statusEl.style.opacity = 0;
+      setTimeout(() => {
+        statusEl.innerText = messages[msgIndex];
+        statusEl.style.opacity = 1;
+      }, 300);
+    }, 3500);
+
+    const themeNames = {
+      'time-traveler': 'a person styled across decades from 1920s to 2090s, cinematic portrait',
+      'heros-journey': 'a person as a heroic warrior figure, ancient to futuristic style, cinematic portrait',
+      'romantic': 'a person in elegant romantic vintage-to-future fashion, cinematic portrait',
+      'rebel': 'a person in edgy counterculture fashion, 1950s to futuristic style, cinematic portrait',
+      'royal': 'a person as medieval to futuristic royalty, ornate cinematic portrait',
+      'genius': 'a person as a brilliant inventor/scientist, 1800s to futuristic style, cinematic portrait',
+      'explorer': 'a person as an adventurous explorer, age of exploration to space age, cinematic portrait',
+      'artist': 'a person as a creative artist, renaissance to futuristic style, cinematic portrait',
+      'celebrity': 'a person as a glamorous celebrity, classic Hollywood to futuristic style, cinematic portrait',
+      'spirit': 'a person on a mystical spiritual journey, ancient to cosmic future style, cinematic portrait'
+    };
+
+    (async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      const theme = sessionStorage.getItem('retropia_selected_journey');
+      if (!theme) {
+        window.location.href = 'journey.html';
+        return;
+      }
+
+      const prompt = themeNames[theme] || 'a cinematic portrait across different eras';
+
+      try {
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&nologo=true&seed=${Date.now()}`;
+
+        // Preload the image so we only move on once it's actually ready
+        await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        clearInterval(rotateInterval);
+
+        sessionStorage.setItem('retropia_result_image', imageUrl);
+        sessionStorage.setItem('retropia_result_theme', theme);
+        window.location.href = 'result.html';
+      } catch (err) {
+        clearInterval(rotateInterval);
+        sessionStorage.setItem('retropia_generation_error', String(err));
+        window.location.href = 'generation-failed.html';
+      }
+    })();
+  </script>
+</body>
+</html>
